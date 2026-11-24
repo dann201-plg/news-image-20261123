@@ -1,6 +1,10 @@
 # The world in one day — Monday 23 November 2026
 
-Entry for the make.fun bounty
+[![make.fun](https://make.fun/badge/news-image-20261123.svg)](https://make.fun/bounty/news-image-20261123)
+[![rank](https://make.fun/badge/news-image-20261123/dann201-plg/news-image-20261123/rank.svg)](https://make.fun/bounty/news-image-20261123)
+[![reward](https://make.fun/badge/news-image-20261123/dann201-plg/news-image-20261123/reward.svg)](https://make.fun/bounty/news-image-20261123)
+
+Entry for the [make.fun](https://make.fun) bounty
 [Sum up 23 November's world news in one image](https://make.fun/bounty/news-image-20261123).
 
 One image that sums up the world's news of Monday 23 November 2026:
