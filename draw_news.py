@@ -1,18 +1,24 @@
-"""Draw the news-image entry for Monday 23 November 2026.
+"""Draw the news-image entry for Monday 23 November 2026 (v3).
 
 Renders a one-page newspaper front page (1024x1024 PNG) that sums up the
-world's news of 23 November 2026: a masthead, the date, one lead story and
-eight more stories across regions and fields. Run it, then look at the
-picture it writes:
+world's news of 23 November 2026: a masthead with the date and a story-count
+badge, one lead story, six featured stories, a dense "Also today" band of
+sixteen more one-line stories (23 stories in total), and a DATE CHECK footer
+that names two big stories deliberately left out because they were first
+reported before Monday.
 
     python3 draw_news.py            # writes entry.png beside this file
     python3 draw_news.py out.png    # writes to the given path instead
 
 Every story below was first reported on 23 November 2026 (checked against
-that day's wire headlines). Text is wrapped by measured width so nothing
-overflows: the layout measures every wrapped line first, then sizes each
-card from what it actually holds, and shrinks the story fonts a step if
-the page would run past 1024 pixels.
+that day's wire headlines: Reuters, WSJ, CNN, BBC, Al Jazeera and the day's
+news roundups). Two stories were checked and EXCLUDED on purpose: COP31
+ended without a deal on Sunday 22 November (UN News, Le Monde, WRI), and
+Miley Cyrus married on Saturday 21 November, first reported that day by
+Entertainment Tonight and confirmed by her on Sunday 22 November. Text is
+wrapped by measured width so nothing overflows: the layout measures every
+wrapped line first, then sizes each card from what it actually holds, and
+shrinks the story fonts a step if the page would run past 1024 pixels.
 """
 
 import sys
@@ -81,13 +87,13 @@ def draw_centered(draw, y, text, fnt, fill, spacing=0):
     return text_h(draw, text, fnt)
 
 
-# (tag, tag colour, headline, summary)
-STORIES = [
+# Featured stories: (tag, tag colour, headline, summary)
+FEATURED = [
     (
-        "CLIMATE",
-        TEAL,
-        "COP31 climate talks collapse",
-        "UN climate summit ends without a deal.",
+        "TECH",
+        PURPLE,
+        "Nvidia brings back Jensen Huang",
+        "Shares jump a third on the news.",
     ),
     (
         "MARKETS",
@@ -102,35 +108,33 @@ STORIES = [
         "Arrested in Sinaloa, Mexico says.",
     ),
     (
-        "UNITED STATES",
-        INK,
-        "FBI probes hack of police database",
-        "National police database breached.",
-    ),
-    (
         "INDONESIA",
         TEAL,
         "Dozens missing after factory fire",
         "Search under way after a factory blaze.",
     ),
-    (
-        "MIDDLE EAST",
-        RED,
-        "Iran warns of retaliation",
-        "Tehran threatens a response to the blockade.",
-    ),
-    (
-        "EUROPE",
-        INK,
-        "Belgium flights grounded by strike",
-        "Austerity protest halts air traffic.",
-    ),
-    (
-        "SPORT & CULTURE",
-        GOLD,
-        "Skubal signs record $450M Mets deal",
-        "Biggest deal ever for a pitcher.",
-    ),
+]
+
+# Also today: one line each, (tag, tag colour, text)
+ALSO = [
+    ("MIDDLE EAST", RED, "Iran threatens retaliation."),
+    ("EUROPE", INK, "Belgium flights halted by strike."),
+    ("BRITAIN", INK, "12,000 leave concert in scare."),
+    ("ASIA", TEAL, "India pledges \u20ac1.4bn to Nepal."),
+    ("USA", INK, "Democrats set 12 debates for 2028."),
+    ("SPORT", GOLD, "Skubal signs record $450M deal."),
+    ("EUROPE", INK, "Poland calls NATO meeting on Russia."),
+    ("USA", INK, "States sue SpaceX over Grok images."),
+    ("COLOMBIA", PURPLE, "Starlink charged over prison links."),
+    ("GERMANY", INK, "Merz warns of Russia provocations."),
+    ("USA", INK, "Trump limits Congress information access."),
+    ("SUDAN", RED, "Humanitarian emergency deepens."),
+    ("CHINA", TEAL, "2030 goals for care and childcare."),
+    ("BRITAIN", INK, "New force to stop small boats."),
+    ("CULTURE", GOLD, "\u201cHeal\u201d trailer stars Princess of Wales."),
+    ("TECH", PURPLE, "$72bn in Ether faces quantum risk."),
+    ("USA", INK, "FBI probes police database hack."),
+    ("EUROPE", INK, "EU unveils new Russia sanctions."),
 ]
 
 LEAD_TAG = "UKRAINE \u00b7 WAR"
@@ -139,41 +143,58 @@ LEAD_SUMMARY = (
     "Kyiv says its sea drones struck two Russian ships; "
     "Moscow hit the Kyiv region, killing at least 11 in Dymer."
 )
+BADGE = "23 STORIES  \u00b7  6 REGIONS  \u00b7  12 FIELDS"
+FOOT_1 = "23 stories from around the world  \u00b7  All events first reported 23 November 2026"
+FOOT_2 = (
+    "Date-checked: COP31 ended Sunday 22 Nov; "
+    "Miley Cyrus married Saturday 21 Nov \u2014 not Monday news."
+)
 
 
-def layout(draw, head_size, body_size):
+def layout(draw, head_size, body_size, band_size):
     """Measure the whole page at the given story font sizes.
 
-    Returns (lead_lines, story_lines, total_height) where story_lines is a
-    list of (headline_lines, summary_lines) per story.
+    Returns (lead_head, lead_sum, lead_h, feat_lines, cell_h, band_h, total).
     """
     margin = 36
     content_w = W - 2 * margin
-    f_lead = font(SANS_BOLD, 36)
-    f_sum = font(SANS, 22)
+    f_lead = font(SANS_BOLD, 34)
+    f_sum = font(SANS, 21)
     f_head = font(SANS_BOLD, head_size)
     f_body = font(SANS, body_size)
 
     lead_head = wrap(draw, LEAD_HEADLINE, f_lead, content_w - 42, 2)
     lead_sum = wrap(draw, LEAD_SUMMARY, f_sum, content_w - 42, 2)
-    lead_h = 16 + 28 + len(lead_head) * 44 + 4 + len(lead_sum) * 28 + 16
+    lead_h = 15 + 26 + len(lead_head) * 42 + 4 + len(lead_sum) * 27 + 14
 
     cell_w = (content_w - 20) // 2
     inner = cell_w - 32
-    story_lines = []
+    feat_lines = []
     max_cell = 0
-    for _tag, _colour, headline, summary in STORIES:
+    for _tag, _colour, headline, summary in FEATURED:
         hl = wrap(draw, headline, f_head, inner, 2)
         sl = wrap(draw, summary, f_body, inner, 2)
-        story_lines.append((hl, sl))
-        cell = 16 + 26 + len(hl) * (head_size + 5) + 2 + len(sl) * (body_size + 6) + 12
+        feat_lines.append((hl, sl))
+        cell = 15 + 25 + len(hl) * (head_size + 5) + 2 + len(sl) * (body_size + 6) + 11
         max_cell = max(max_cell, cell)
 
-    # Masthead block: rule + masthead + date + rule.
-    mast_h = 26 + 6 + 46 + text_h(draw, "THE WORLD IN ONE DAY", font(SERIF_BOLD, 52))
-    mast_h += 10 + text_h(draw, "MONDAY", font(SANS_BOLD, 30)) + 12 + 2 + 18
-    total = mast_h + lead_h + 18 + 4 * max_cell + 3 * 14 + 16 + 2 + 12 + 19 + 8
-    return lead_head, lead_sum, lead_h, story_lines, max_cell, total
+    band_rows = (len(ALSO) + 1) // 2
+    band_h = 28 + band_rows * (band_size + 7) + 8
+
+    mast_h = (
+        26 + 6 + 42
+        + text_h(draw, "THE WORLD IN ONE DAY", font(SERIF_BOLD, 50))
+        + 8 + text_h(draw, "MONDAY", font(SANS_BOLD, 28))
+        + 8 + text_h(draw, BADGE, font(SANS_BOLD, 17))
+        + 10 + 2 + 14
+    )
+    rows = (len(FEATURED) + 1) // 2
+    foot_h = 2 + 12 + (19 + 6) + (17 + 6) + 8
+    total = (
+        mast_h + lead_h + 12 + rows * max_cell + (rows - 1) * 12
+        + 12 + band_h + 12 + foot_h
+    )
+    return lead_head, lead_sum, lead_h, feat_lines, max_cell, band_h, total
 
 
 def main(out_path):
@@ -183,9 +204,9 @@ def main(out_path):
     content_w = W - 2 * margin
 
     # Shrink the story fonts a step at a time until the page fits.
-    for head_size, body_size in [(26, 20), (25, 19), (24, 19), (23, 18)]:
-        lead_head, lead_sum, lead_h, story_lines, cell_h, total = layout(
-            d, head_size, body_size
+    for head_size, body_size, band_size in [(24, 19, 17), (23, 18, 16), (22, 18, 16), (21, 17, 15)]:
+        lead_head, lead_sum, lead_h, feat_lines, cell_h, band_h, total = layout(
+            d, head_size, body_size, band_size
         )
         if total <= H:
             break
@@ -194,55 +215,59 @@ def main(out_path):
     d.rectangle([margin, 26, W - margin, 32], fill=RED)
 
     # Masthead.
-    y = 46
-    f_mast = font(SERIF_BOLD, 52)
+    y = 42
+    f_mast = font(SERIF_BOLD, 50)
     y += draw_centered(d, y, "THE WORLD IN ONE DAY", f_mast, INK)
-    y += 10
+    y += 8
 
     # Date line, letter-spaced.
-    f_date = font(SANS_BOLD, 30)
+    f_date = font(SANS_BOLD, 28)
     y += draw_centered(d, y, "MONDAY  \u00b7  23 NOVEMBER 2026", f_date, RED, spacing=2)
-    y += 12
+    y += 8
+
+    # Badge line.
+    f_badge = font(SANS_BOLD, 17)
+    y += draw_centered(d, y, BADGE, f_badge, INK, spacing=1)
+    y += 10
     d.line([margin, y, W - margin, y], fill=RULE, width=2)
-    y += 18
+    y += 14
 
     # Lead story card.
     card_top = y
     d.rectangle([margin, card_top, W - margin, card_top + lead_h], fill=CARD)
     d.rectangle([margin, card_top, margin + 8, card_top + lead_h], fill=RED)
     lx = margin + 26
-    lw = content_w - 26 - 16
-    f_tag = font(SANS_BOLD, 20)
-    f_lead = font(SANS_BOLD, 36)
-    f_sum = font(SANS, 22)
-    ly = card_top + 16
+    f_tag = font(SANS_BOLD, 19)
+    f_lead = font(SANS_BOLD, 34)
+    f_sum = font(SANS, 21)
+    ly = card_top + 15
     d.text((lx, ly), LEAD_TAG, font=f_tag, fill=RED)
-    ly += 28
+    ly += 26
     for line in lead_head:
         d.text((lx, ly), line, font=f_lead, fill=INK)
-        ly += 44
+        ly += 42
     ly += 4
     for line in lead_sum:
         d.text((lx, ly), line, font=f_sum, fill=MUTED)
-        ly += 28
-    y = card_top + lead_h + 18
+        ly += 27
+    y = card_top + lead_h + 12
 
-    # Story grid: 2 columns x 4 rows.
-    gap_x, gap_y = 20, 14
+    # Featured grid: 2 columns x 3 rows.
+    gap_x, gap_y = 20, 12
     cell_w = (content_w - gap_x) // 2
     f_stag = font(SANS_BOLD, 18)
     f_head = font(SANS_BOLD, head_size)
     f_body = font(SANS, body_size)
-    for i, ((tag, colour, _h, _s), (hl, sl)) in enumerate(zip(STORIES, story_lines)):
+    for i, ((tag, colour, _h, _s), (hl, sl)) in enumerate(zip(FEATURED, feat_lines)):
         col, row = i % 2, i // 2
         x0 = margin + col * (cell_w + gap_x)
         y0 = y + row * (cell_h + gap_y)
         d.rectangle([x0, y0, x0 + cell_w, y0 + cell_h], fill=CARD)
         d.rectangle([x0, y0, x0 + cell_w, y0 + 5], fill=colour)
         tx = x0 + 16
-        ty = y0 + 16
+        ty = y0 + 15
         d.text((tx, ty), tag, font=f_stag, fill=colour)
-        ty += 26
+        ty += 25
         for line in hl:
             d.text((tx, ty), line, font=f_head, fill=INK)
             ty += head_size + 5
@@ -250,22 +275,38 @@ def main(out_path):
         for line in sl:
             d.text((tx, ty), line, font=f_body, fill=MUTED)
             ty += body_size + 6
+    rows = (len(FEATURED) + 1) // 2
+    y = y + rows * cell_h + (rows - 1) * gap_y + 12
+
+    # Also today band.
+    f_band_h = font(SANS_BOLD, 19)
+    d.text((margin, y), "ALSO TODAY", font=f_band_h, fill=RED)
+    d.line([margin, y + 26, W - margin, y + 26], fill=RULE, width=1)
+    y += 28
+    band_col_w = (content_w - gap_x) // 2
+    f_band = font(SANS, band_size)
+    f_band_b = font(SANS_BOLD, band_size)
+    band_rows = (len(ALSO) + 1) // 2
+    for i, (tag, colour, text) in enumerate(ALSO):
+        col, row = i % 2, i // 2
+        x0 = margin + col * (band_col_w + gap_x)
+        y0 = y + row * (band_size + 7)
+        d.text((x0, y0), tag + "  \u2014  ", font=f_band_b, fill=colour)
+        tw = d.textlength(tag + "  \u2014  ", font=f_band_b)
+        d.text((x0 + tw, y0), text, font=f_band, fill=INK)
+    y = y + band_rows * (band_size + 7) + 8
 
     # Footer.
-    fy = y + 4 * cell_h + 3 * gap_y + 16
+    fy = y + 12
     d.line([margin, fy, W - margin, fy], fill=RULE, width=2)
     f_foot = font(SANS, 19)
-    draw_centered(
-        d,
-        fy + 12,
-        "9 stories from around the world  \u00b7  All events first reported 23 November 2026",
-        f_foot,
-        MUTED,
-    )
+    f_foot2 = font(SANS, 17)
+    draw_centered(d, fy + 12, FOOT_1, f_foot, MUTED)
+    draw_centered(d, fy + 12 + 25, FOOT_2, f_foot2, RED)
 
     img.save(out_path, format="PNG", optimize=True)
     print(f"wrote {out_path} ({img.size[0]}x{img.size[1]}) "
-          f"head={head_size} body={body_size} total={total}")
+          f"head={head_size} body={body_size} band={band_size} total={total}")
 
 
 if __name__ == "__main__":
