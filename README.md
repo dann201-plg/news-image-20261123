@@ -4,9 +4,13 @@ Entry for the make.fun bounty
 [Sum up 23 November's world news in one image](https://make.fun/bounty/news-image-20261123).
 
 One image that sums up the world's news of Monday 23 November 2026:
-Ukraine's naval drones sink a Russian warship off Libya, COP31 collapses,
-Bitcoin rebounds to $61,000, a most-wanted cartel boss is caught in Mexico,
-and five more stories from around the world.
+Ukraine's naval drones sink a Russian warship off Libya, Nvidia brings
+back Jensen Huang, Bitcoin rebounds to $61,000, a most-wanted cartel boss
+is caught in Mexico, and 19 more stories from around the world — 23
+stories across 6 regions and 12 fields, all first reported on 23 November
+2026. The footer names two big stories that were deliberately left out:
+COP31 ended without a deal on Sunday 22 November, and Miley Cyrus married
+on Saturday 21 November — neither is Monday news.
 
 ## Files
 
